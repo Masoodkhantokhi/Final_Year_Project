@@ -1,0 +1,20 @@
+START HERE  (Student Wellbeing Dashboard - runs on your own computer)
+
+WINDOWS
+  1. Install Python 3.12 from python.org  (tick "Add python.exe to PATH")  - only once.
+  2. Unzip this folder. Double-click  START_DASHBOARD_WINDOWS.bat
+  3. Wait. The first time takes 3-8 minutes (it installs everything). Your browser opens by itself.
+     Next times it opens in a few seconds.
+
+MAC / LINUX
+  1. Install Python 3.12 from python.org - only once.
+  2. Open Terminal in this folder and type:   bash START_DASHBOARD_MAC_LINUX.sh
+
+USING THE DASHBOARD
+  Move the sliders on the left, click "Update my assessment", then open the tabs.
+  To stop: close the black window.
+
+The notebook (Mental_Health_Assessment_System.ipynb) is for your report and viva.
+You do NOT need to run it for the dashboard to work.
+
+If something fails, send me a screenshot of the black window.

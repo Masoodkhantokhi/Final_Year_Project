@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Wellbeing Assessment System</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Modern Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17a2 2 0 0 0 2-2"/></svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">WellbeingAI</span>
+          <span class="logo-subtitle">Student Analytics</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <span class="nav-section-title">Core</span>
+        <a class="nav-link active" data-view="view-dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-link" data-view="view-assessment">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+          Assessment Form
+        </a>
+
+        <span class="nav-section-title">Intelligence</span>
+        <a class="nav-link" data-view="view-insights">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          Insights & SHAP
+        </a>
+        <a class="nav-link" data-view="view-recommendations">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          Personalized Advice
+        </a>
+        <a class="nav-link" data-view="view-simulator">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          What-If Simulator
+        </a>
+
+        <span class="nav-section-title">Execution</span>
+        <a class="nav-link" data-view="view-plan">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+          4-Week Plan
+        </a>
+        <a class="nav-link" data-view="view-resources">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+          Videos & Courses
+        </a>
+        <a class="nav-link" data-view="view-about">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          About & Limits
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-badge">
+          <span class="status-indicator" id="system-status-indicator"></span>
+          <span id="system-status-text">Connecting to ML...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <div class="main-wrapper">
+      
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="page-breadcrumb">
+          <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+          </button>
+          <span class="breadcrumb-root">Student Wellbeing</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-current" id="breadcrumb-current-text">Dashboard</span>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-btn" id="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Light/Dark Theme">
+            <span id="theme-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            </span>
+          </button>
+          <button class="btn-secondary" onclick="document.querySelector('.nav-link[data-view=\'view-assessment\']').click()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            Edit Habits
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Dynamic Content Views -->
+      <main class="content-area">
+
+        <!-- ================================================================
+             VIEW 1: DASHBOARD
+             ================================================================ -->
+        <section class="view-section active" id="view-dashboard">
+          
+          <!-- Hero Banner -->
+          <div class="hero-banner">
+            <div class="hero-content">
+              <h1>Student Wellbeing Intelligence</h1>
+              <p>Predictive machine-learning assessment evaluating academic, lifestyle, and digital phone usage habits with explainable AI.</p>
+            </div>
+            <button class="btn-primary" style="width: auto;" onclick="document.querySelector('.nav-link[data-view=\'view-assessment\']').click()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Customize Assessment
+            </button>
+          </div>
+
+          <!-- Educational Disclaimer Banner -->
+          <div class="disclaimer-banner">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            <div>
+              <strong>Academic Project Disclaimer:</strong> This system uses a machine-learning regression pipeline trained on student lifestyle survey data. It provides educational insights and pattern correlations, not medical or psychological diagnoses. Nothing you submit is stored on external servers.
+            </div>
+          </div>
+
+          <!-- Crisis Support Banner (Conditional) -->
+          <div class="crisis-banner" id="crisis-support-banner" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            <div>
+              <strong>You are not alone:</strong> If you are feeling overwhelmed, prolonged distress, or having thoughts of self-harm, please connect with someone you trust or a counselor. In Pakistan, call the <strong>Umang 24/7 Helpline</strong> at <code>0311-7786264</code> (umang.com.pk). For urgent situations, contact local medical emergency services immediately.
+            </div>
+          </div>
+
+          <!-- Overview Grid -->
+          <div class="overview-grid">
+            
+            <!-- Radial Score Card -->
+            <div class="card score-card">
+              <div class="card-header" style="width: 100%;">
+                <div class="card-title-group">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  <span class="card-title">Predicted Wellbeing</span>
+                </div>
+              </div>
+
+              <!-- Animated SVG Radial Gauge -->
+              <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                  <circle class="gauge-bg" cx="100" cy="100" r="90"></circle>
+                  <circle class="gauge-progress" id="gauge-circle-progress" cx="100" cy="100" r="90"></circle>
+                </svg>
+                <div class="gauge-content">
+                  <span class="gauge-score" id="gauge-score-value">--</span>
+                  <span class="gauge-max">out of 10</span>
+                </div>
+              </div>
+
+              <div class="score-badge-pill moderate" id="score-band-badge">Calculating...</div>
+              <p class="score-band-desc" id="score-band-message">Your assessment is being computed by the machine-learning pipeline.</p>
+              <div class="score-range-note">
+                Typical Model Range (80% confidence): <strong id="metric-range-val">--</strong>
+              </div>
+
+              <!-- Quick Metrics Pills -->
+              <div class="metrics-row">
+                <div class="metric-pill">
+                  <div class="metric-pill-label">Average Student</div>
+                  <div class="metric-pill-val" id="metric-base-val">6.1 / 10</div>
+                </div>
+                <div class="metric-pill">
+                  <div class="metric-pill-label">Model Accuracy</div>
+                  <div class="metric-pill-val">R² = 0.85</div>
+                </div>
+                <div class="metric-pill">
+                  <div class="metric-pill-label">Plan Potential</div>
+                  <div class="metric-pill-val" id="metric-plan-gain-val">+0.0 pts</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Habit Balance & Strengths -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                  <div>
+                    <h3 class="card-title">Lifestyle Habit Balance</h3>
+                    <p class="card-subtitle">Comparison against optimal student health benchmarks</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="radar-chart-canvas"></canvas>
+              </div>
+
+              <!-- Strengths Recognition Banner -->
+              <div class="strengths-container">
+                <strong style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--success);">
+                  Recognized Habit Strengths
+                </strong>
+                <div id="strengths-list">
+                  <!-- Injected via JavaScript -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- ================================================================
+             VIEW 2: ASSESSMENT FORM
+             ================================================================ -->
+        <section class="view-section" id="view-assessment">
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <div>
+                  <h2 class="card-title">Student Habit Profile Assessment</h2>
+                  <p class="card-subtitle">Enter your daily averages. Your responses are processed locally in real time.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Presets Bar -->
+            <div class="form-presets-bar">
+              <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Load Archetype Preset:</span>
+              <button type="button" class="preset-chip" data-preset="typical">🎓 Typical University Student</button>
+              <button type="button" class="preset-chip" data-preset="balanced">🌿 Balanced & Healthy Routine</button>
+              <button type="button" class="preset-chip" data-preset="stressed">⚡ High Screen / Exam Crunch</button>
+            </div>
+
+            <form id="assessment-form">
+              <div class="inputs-grid">
+                
+                <!-- Social Media Time -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <div class="input-label-group">
+                      <label class="input-label" for="input-Avg_Daily_Usage_Hours">Daily Social-Media Usage</label>
+                      <span class="input-helper">Active screen time on Instagram, TikTok, YouTube, etc.</span>
+                    </div>
+                    <span class="input-badge" id="badge-usage">5.0 h/day</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="custom-range" id="input-Avg_Daily_Usage_Hours" min="1.0" max="9.0" step="0.1" value="5.0" data-badge="badge-usage" data-unit="h/day">
+                    <div class="range-bounds">
+                      <span>1.0 h</span>
+                      <span>5.0 h</span>
+                      <span>9.0 h</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Daily Unlocks -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <div class="input-label-group">
+                      <label class="input-label" for="input-Daily_Unlocks">Phone Checks per Day</label>
+                      <span class="input-helper">How many times you unlock or inspect notifications daily</span>
+                    </div>
+                    <span class="input-badge" id="badge-unlocks">170 times/day</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="custom-range" id="input-Daily_Unlocks" min="60" max="280" step="5" value="170" data-badge="badge-unlocks" data-unit="times/day">
+                    <div class="range-bounds">
+                      <span>60 unlocks</span>
+                      <span>170 avg</span>
+                      <span>280 checks</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Study Hours -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <div class="input-label-group">
+                      <label class="input-label" for="input-Study_Hours">Dedicated Study Time</label>
+                      <span class="input-helper">Focused academic coursework, readings, assignments</span>
+                    </div>
+                    <span class="input-badge" id="badge-study">3.0 h/day</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="custom-range" id="input-Study_Hours" min="0.3" max="8.5" step="0.1" value="3.0" data-badge="badge-study" data-unit="h/day">
+                    <div class="range-bounds">
+                      <span>0.3 h</span>
+                      <span>4.0 h</span>
+                      <span>8.5 h</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Physical Activity -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <div class="input-label-group">
+                      <label class="input-label" for="input-Physical_Activity_Hours">Daily Physical Activity</label>
+                      <span class="input-helper">Walking, gym workouts, jogging, cycling, sports</span>
+                    </div>
+                    <span class="input-badge" id="badge-activity">1.7 h/day</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="custom-range" id="input-Physical_Activity_Hours" min="0.0" max="4.2" step="0.1" value="1.7" data-badge="badge-activity" data-unit="h/day">
+                    <div class="range-bounds">
+                      <span>0.0 h</span>
+                      <span>2.0 h</span>
+                      <span>4.2 h</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sleep Hours -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <div class="input-label-group">
+                      <label class="input-label" for="input-Sleep_Hours_Per_Night">Sleep Duration</label>
+                      <span class="input-helper">Average restful sleep hours per night</span>
+                    </div>
+                    <span class="input-badge" id="badge-sleep">6.6 h/night</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="custom-range" id="input-Sleep_Hours_Per_Night" min="3.5" max="10.0" step="0.1" value="6.6" data-badge="badge-sleep" data-unit="h/night">
+                    <div class="range-bounds">
+                      <span>3.5 h</span>
+                      <span>7.0 h</span>
+                      <span>10.0 h</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Academic Level -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <div class="input-label-group">
+                      <label class="input-label" for="input-Academic_Level">Academic Degree Level</label>
+                      <span class="input-helper">Current tier of student studies</span>
+                    </div>
+                  </div>
+                  <div class="select-wrapper">
+                    <select class="custom-select" id="input-Academic_Level">
+                      <option value="High School">High School</option>
+                      <option value="Undergraduate" selected>Undergraduate Degree</option>
+                      <option value="Graduate">Graduate / Postgraduate Degree</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Purpose of Use -->
+                <div class="input-card" style="grid-column: 1 / -1;">
+                  <div class="input-header">
+                    <div class="input-label-group">
+                      <label class="input-label" for="input-Purpose_Of_Use">Primary Purpose of Digital Device Usage</label>
+                      <span class="input-helper">What dominates your social-media / screen time</span>
+                    </div>
+                  </div>
+                  <div class="select-wrapper">
+                    <select class="custom-select" id="input-Purpose_Of_Use">
+                      <option value="Education">Education & Academic Research</option>
+                      <option value="Entertainment" selected>Entertainment & Passive Browsing</option>
+                      <option value="Networking">Networking & Professional Communication</option>
+                      <option value="News">News & Current Affairs</option>
+                    </select>
+                  </div>
+                </div>
+
+              </div>
+
+              <div style="margin-top: 1.5rem;">
+                <button type="submit" class="btn-primary" id="submit-assessment-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Calculate Wellbeing Assessment & Explain Predictions
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </section>
+
+
+        <!-- ================================================================
+             VIEW 3: INSIGHTS & SHAP
+             ================================================================ -->
+        <section class="view-section" id="view-insights">
+          
+          <div class="card shap-chart-card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                <div>
+                  <h3 class="card-title">Explainable AI: SHAP Habit Attribution</h3>
+                  <p class="card-subtitle">Exact score points contributed (+) or detracted (-) relative to the baseline student average</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="shap-legend">
+              <div class="legend-item">
+                <span class="legend-color positive"></span>
+                <span>Positive Factor (Elevates Score)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color negative"></span>
+                <span>Negative Factor (Reduces Score)</span>
+              </div>
+              <div style="margin-left: auto; font-style: italic;">
+                Baseline (Expected Value): 6.1 points
+              </div>
+            </div>
+
+            <div style="position: relative; height: 320px; width: 100%; margin-top: 1rem;">
+              <canvas id="shap-chart-canvas"></canvas>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem;">Habit-by-Habit Attribution Breakdown</h4>
+              <div class="drivers-list" id="shap-drivers-list">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+
+        <!-- ================================================================
+             VIEW 4: PERSONALIZED RECOMMENDATIONS
+             ================================================================ -->
+        <section class="view-section" id="view-recommendations">
+          
+          <div class="hero-banner" style="margin-bottom: 1.5rem;">
+            <div class="hero-content">
+              <h2>Actionable Lifestyle Recommendations</h2>
+              <p>Rule-based guidance synthesized from empirical study habits, sleep hygiene, and digital mindfulness literature.</p>
+            </div>
+          </div>
+
+          <div class="recommendations-grid" id="recommendations-grid">
+            <!-- Injected via JavaScript -->
+          </div>
+
+        </section>
+
+
+        <!-- ================================================================
+             VIEW 5: WHAT-IF SIMULATOR
+             ================================================================ -->
+        <section class="view-section" id="view-simulator">
+          
+          <div class="simulator-layout">
+            
+            <!-- Sliders Box -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  <div>
+                    <h3 class="card-title">Interactive What-If Habit Studio</h3>
+                    <p class="card-subtitle">Adjust lifestyle variables to observe real-time model predictions</p>
+                  </div>
+                </div>
+                <button type="button" class="btn-secondary" id="reset-simulation-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  Reset
+                </button>
+              </div>
+
+              <div class="inputs-grid">
+                
+                <!-- Sleep -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <span class="input-label">Simulate Sleep</span>
+                    <span class="input-badge" id="sim-sleep-val">6.6 h</span>
+                  </div>
+                  <input type="range" class="custom-range" id="sim-sleep" min="3.5" max="10.0" step="0.1" value="6.6" data-unit="h">
+                </div>
+
+                <!-- Activity -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <span class="input-label">Simulate Activity</span>
+                    <span class="input-badge" id="sim-activity-val">1.7 h</span>
+                  </div>
+                  <input type="range" class="custom-range" id="sim-activity" min="0.0" max="4.2" step="0.1" value="1.7" data-unit="h">
+                </div>
+
+                <!-- Screen Time -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <span class="input-label">Simulate Social Media</span>
+                    <span class="input-badge" id="sim-usage-val">5.0 h</span>
+                  </div>
+                  <input type="range" class="custom-range" id="sim-usage" min="1.0" max="9.0" step="0.1" value="5.0" data-unit="h">
+                </div>
+
+                <!-- Phone Checks -->
+                <div class="input-card">
+                  <div class="input-header">
+                    <span class="input-label">Simulate Unlocks</span>
+                    <span class="input-badge" id="sim-unlocks-val">170 times</span>
+                  </div>
+                  <input type="range" class="custom-range" id="sim-unlocks" min="60" max="280" step="5" value="170" data-unit="times">
+                </div>
+
+                <!-- Study Hours -->
+                <div class="input-card" style="grid-column: 1 / -1;">
+                  <div class="input-header">
+                    <span class="input-label">Simulate Study Blocks</span>
+                    <span class="input-badge" id="sim-study-val">3.0 h</span>
+                  </div>
+                  <input type="range" class="custom-range" id="sim-study" min="0.3" max="8.5" step="0.1" value="3.0" data-unit="h">
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Score Comparison Card -->
+            <div class="comparison-box">
+              <span class="diff-title">Real-Time ML Prediction Delta</span>
+              
+              <div class="score-diff-display">
+                <div class="diff-circle">
+                  <span class="diff-title">Current</span>
+                  <span class="diff-number" id="sim-base-score">6.0</span>
+                </div>
+
+                <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+
+                <div class="diff-circle" style="border: 2px solid var(--accent-primary);">
+                  <span class="diff-title">Simulated</span>
+                  <span class="diff-number" id="sim-target-score" style="color: var(--accent-primary);">6.0</span>
+                </div>
+              </div>
+
+              <div class="gain-indicator-pill neutral" id="sim-diff-pill">
+                ±0.0 pts (Unchanged)
+              </div>
+
+              <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.5rem;">
+                Predictions are generated on demand by the Random Forest pipeline. Differences under ~0.3 points fall within the typical regression error margin.
+              </p>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- ================================================================
+             VIEW 6: IMPROVEMENT PLAN
+             ================================================================ -->
+        <section class="view-section" id="view-plan">
+          
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+              <div class="card-title-group">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                <div>
+                  <h3 class="card-title">4-Week Progressive Habit Ramp</h3>
+                  <p class="card-subtitle">Gradual 25% weekly incremental targets to prevent burnout and foster sustainable adherence</p>
+                </div>
+              </div>
+              <button class="btn-secondary" id="download-plan-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                Export Plan (.txt)
+              </button>
+            </div>
+
+            <!-- Week Switcher Tabs -->
+            <div class="plan-tabs-bar">
+              <button class="plan-tab-btn active" data-week="1">Week 1 (25% Ramp)</button>
+              <button class="plan-tab-btn" data-week="2">Week 2 (50% Ramp)</button>
+              <button class="plan-tab-btn" data-week="3">Week 3 (75% Ramp)</button>
+              <button class="plan-tab-btn" data-week="4">Week 4 (Full Target)</button>
+            </div>
+
+            <div class="plan-table-wrapper">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Habit Focus</th>
+                    <th>Weekly Target</th>
+                    <th>Implementation Strategy</th>
+                  </tr>
+                </thead>
+                <tbody id="plan-table-body">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Daily Schedule Checklist -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <div>
+                  <h3 class="card-title">Week-1 Action Schedule Checklist</h3>
+                  <p class="card-subtitle">Tick off daily habit milestones as you complete them throughout the week (saved in local storage)</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="schedule-list" id="schedule-checklist">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+
+        </section>
+
+
+        <!-- ================================================================
+             VIEW 7: EDUCATIONAL RESOURCES
+             ================================================================ -->
+        <section class="view-section" id="view-resources">
+          
+          <div class="hero-banner" style="margin-bottom: 1.5rem;">
+            <div class="hero-content">
+              <h2>Curated Wellbeing Literature & Courses</h2>
+              <p>Hand-verified scientific talks from researchers and free-audit university courses tailored to your specific focus areas.</p>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">
+            Scientific Talks & Media
+          </h3>
+          <div class="resources-grid" id="resources-videos-grid" style="margin-bottom: 2rem;">
+            <!-- Injected via JavaScript -->
+          </div>
+
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">
+            University Courses & Practical Workshops
+          </h3>
+          <div class="resources-grid" id="resources-courses-grid">
+            <!-- Injected via JavaScript -->
+          </div>
+
+        </section>
+
+
+        <!-- ================================================================
+             VIEW 8: ABOUT & LIMITATIONS
+             ================================================================ -->
+        <section class="view-section" id="view-about">
+          
+          <div class="about-grid">
+            
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <h3 class="card-title">System Methodology & Architectural Design</h3>
+                </div>
+              </div>
+
+              <div style="font-size: 0.9rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 1rem; line-height: 1.6;">
+                <p>
+                  The <strong>Student Wellbeing Assessment System</strong> uses a modern full-stack architecture combining a <strong>Node.js / Express API gateway</strong> with a dedicated <strong>Python ML microservice</strong> running scikit-learn and SHAP TreeExplainer.
+                </p>
+                <p>
+                  <strong>Machine Learning Pipeline:</strong> The core estimator is a tuned <code>RandomForestRegressor</code> combined with a <code>ColumnTransformer</code> preprocessing pipeline that one-hot encodes categorical dimensions (Academic Level, Social Media Purpose) while maintaining numeric habit continuity.
+                </p>
+                <p>
+                  <strong>Explainable AI (XAI):</strong> Rather than acting as a black-box model, each individual inference is explained via SHAP (SHapley Additive exPlanations) values. The model decomposes feature interactions into exact points added or subtracted relative to the global expected baseline score.
+                </p>
+                <p>
+                  <strong>Ethical AI by Design:</strong> Demographic factors such as nationality, gender, and age were deliberately <em>excluded</em> from model training. Lifestyle and mental wellbeing advice should never be prejudiced based on immutable demographic identity, only actionable student behaviors.
+                </p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Model Specifications</h3>
+              </div>
+
+              <table class="metrics-table">
+                <tr>
+                  <td>Estimator</td>
+                  <td>Random Forest (tuned)</td>
+                </tr>
+                <tr>
+                  <td>Training Samples</td>
+                  <td>3,998 students</td>
+                </tr>
+                <tr>
+                  <td>Test Set R²</td>
+                  <td>0.850</td>
+                </tr>
+                <tr>
+                  <td>Test Set MAE</td>
+                  <td>0.398 points</td>
+                </tr>
+                <tr>
+                  <td>Residual q10 / q90</td>
+                  <td>[-0.67, +0.65]</td>
+                </tr>
+                <tr>
+                  <td>Architecture</td>
+                  <td>Express + Flask API</td>
+                </tr>
+              </table>
+
+              <div class="crisis-banner" style="margin-top: 1.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <div style="font-size: 0.8rem;">
+                  <strong>Helpline Support:</strong> Pakistan Umang Mental Health Helpline: <code>0311-7786264</code>. If in immediate danger, call local emergency services.
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

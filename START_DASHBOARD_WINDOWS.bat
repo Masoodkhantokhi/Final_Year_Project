@@ -1,59 +1,48 @@
 @echo off
 cd /d "%~dp0"
-title Student Wellbeing Dashboard
-echo ==========================================
-echo   Student Wellbeing Dashboard (local)
-echo ==========================================
+title Student Wellbeing Assessment Platform
+echo ========================================================
+echo   Student Wellbeing Assessment & Recommendation System
+echo ========================================================
+echo.
 
+:: 1. Check Python
 where python >nul 2>nul
 if errorlevel 1 (
-  echo.
-  echo Python is NOT installed.
-  echo 1. Go to https://www.python.org/downloads/ and install Python 3.12
-  echo 2. On the first installer screen TICK "Add python.exe to PATH"
-  echo 3. Then double-click this file again.
-  echo.
+  echo [ERROR] Python is NOT installed.
+  echo Please install Python 3.12 from https://www.python.org/downloads/
+  echo (Make sure to tick "Add python.exe to PATH")
   pause
   exit /b 1
 )
 
-python -c "import sys; sys.exit(0 if sys.version_info>=(3,11) else 1)"
+:: 2. Check Node.js
+where node >nul 2>nul
 if errorlevel 1 (
-  echo.
-  echo Your Python is too old. Please install Python 3.12 from https://www.python.org/downloads/
-  echo ^(tick "Add python.exe to PATH"^) and double-click this file again.
-  echo.
+  echo [ERROR] Node.js is NOT installed.
+  echo Please install Node.js (v18 or higher) from https://nodejs.org/
   pause
   exit /b 1
 )
 
+:: 3. Setup Python venv if not present
 if not exist "venv\Scripts\activate.bat" (
-  echo.
-  echo First-time setup: this takes 3-8 minutes and needs internet. Please wait...
+  echo [SETUP] Creating Python virtual environment...
   python -m venv venv
   call venv\Scripts\activate.bat
   python -m pip install --upgrade pip
   pip install -r requirements.txt
-  if errorlevel 1 (
-    echo.
-    echo Installation failed. Check your internet connection and double-click this file again.
-    rmdir /s /q venv
-    pause
-    exit /b 1
-  )
-) else (
-  call venv\Scripts\activate.bat
 )
 
-if not exist "%USERPROFILE%\.streamlit" mkdir "%USERPROFILE%\.streamlit"
-if not exist "%USERPROFILE%\.streamlit\credentials.toml" (
-  >"%USERPROFILE%\.streamlit\credentials.toml" echo [general]
-  >>"%USERPROFILE%\.streamlit\credentials.toml" echo email = ""
+:: 4. Ensure backend node_modules exist
+if not exist "backend\node_modules" (
+  echo [SETUP] Installing Node.js backend dependencies...
+  cd backend
+  call npm install
+  cd ..
 )
 
-echo.
-echo Starting the dashboard. Your browser will open at http://localhost:8501
-echo To STOP it, close this window.
-echo.
-streamlit run app.py
+:: 5. Launch Full Application (ML Service + Express API Gateway + Browser)
+echo [START] Launching application services...
+node start.js
 pause

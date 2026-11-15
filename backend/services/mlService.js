@@ -1,109 +1,40 @@
-/**
- * backend/services/mlService.js
- * Communicates with the Python ML microservice over HTTP.
- */
+/** Bounded HTTP requests to the local Python ML service. */
+const baseUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001';
 
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001';
-
-class MLService {
-  constructor(baseUrl) {
-    this.baseUrl = baseUrl;
-  }
-
-  async checkHealth() {
-    try {
-      const response = await fetch(`${this.baseUrl}/health`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      if (!response.ok) {
-        throw new Error(`ML service returned status ${response.status}`);
-      }
-      return await response.json();
-    } catch (err) {
-      return {
-        status: 'unavailable',
-        error: err.message,
-      };
-    }
-  }
-
-  async getMetadata() {
-    const response = await fetch(`${this.baseUrl}/meta`);
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`ML metadata failed: ${errorText}`);
-    }
-    return await response.json();
-  }
-
-  async assess(inputs) {
-    const response = await fetch(`${this.baseUrl}/assess`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inputs),
-      signal: AbortSignal.timeout(10000),
+async function request(endpoint, body, timeout = 10000) {
+  let response;
+  try {
+    response = await fetch(`${baseUrl}${endpoint}`, {
+      method: body === undefined ? 'GET' : 'POST',
+      ...(body === undefined ? {} : {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+      signal: AbortSignal.timeout(timeout),
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'ML assessment failed');
-    }
-    return data;
+  } catch (cause) {
+    const error = new Error('ML service is unavailable. Check that the Python service is running.', { cause });
+    error.status = cause.name === 'TimeoutError' ? 504 : 503;
+    throw error;
   }
-
-  async predict(inputs) {
-    const response = await fetch(`${this.baseUrl}/predict`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inputs),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'ML prediction failed');
-    }
-    return data;
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || data.message || 'ML request failed');
+    error.status = response.status;
+    throw error;
   }
-
-  async explain(inputs) {
-    const response = await fetch(`${this.baseUrl}/explain`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inputs),
-      signal: AbortSignal.timeout(8000),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'ML explanation failed');
-    }
-    return data;
-  }
-
-  async simulate(baseInputs, changes) {
-    const response = await fetch(`${this.baseUrl}/simulate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ base: baseInputs, changes }),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'ML simulation failed');
-    }
-    return data;
-  }
-
-  async getResources() {
-    const response = await fetch(`${this.baseUrl}/resources`);
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`ML resources failed: ${errorText}`);
-    }
-    return await response.json();
-  }
+  return data;
 }
 
-module.exports = new MLService(ML_SERVICE_URL);
+module.exports = {
+  async checkHealth() {
+    try { return await request('/health', undefined, 3000); }
+    catch (error) { return { status: 'unavailable', error: error.message }; }
+  },
+  getMetadata: () => request('/meta'),
+  assess: inputs => request('/assess', inputs),
+  predict: inputs => request('/predict', inputs),
+  explain: inputs => request('/explain', inputs),
+  simulate: (base, changes) => request('/simulate', { base, changes }),
+  getResources: () => request('/resources'),
+};

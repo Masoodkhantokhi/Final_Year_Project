@@ -18,8 +18,6 @@ const state = {
     Purpose_Of_Use: 'Entertainment',
   },
   assessmentData: null,
-  simulatedInputs: null,
-  metadata: null,
   selectedPlanWeek: 1,
   activeView: 'view-dashboard',
 };
@@ -65,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupSimulator();
   setupPlanInteractions();
 
-  // Load initial health & metadata
+  // Load initial service health
   await checkSystemStatus();
 
   // Run initial default assessment
@@ -76,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
    Theme Management
    ========================================================================== */
 function initTheme() {
-  const saved = localStorage.getItem('theme') || 'light';
+  const saved = readStorage('theme', 'light');
   document.documentElement.setAttribute('data-theme', saved);
   updateThemeIcon(saved);
 
@@ -86,7 +84,7 @@ function initTheme() {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
+      writeStorage('theme', next);
       updateThemeIcon(next);
 
       // Re-render charts with updated theme colors
@@ -113,28 +111,73 @@ function updateThemeIcon(theme) {
    ========================================================================== */
 function setupNavigation() {
   const navLinks = document.querySelectorAll('.nav-link[data-view]');
-  const breadcrumb = document.getElementById('breadcrumb-current-text');
   const sidebar = document.getElementById('sidebar');
   const menuBtn = document.getElementById('mobile-menu-btn');
+  const closeBtn = document.getElementById('sidebar-close-btn');
+  const backdrop = document.getElementById('sidebar-backdrop');
+
+  const openSidebar = () => {
+    if (!sidebar) return;
+    sidebar.classList.add('open');
+    if (backdrop) backdrop.classList.add('active');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
+    if (window.innerWidth <= 1024) {
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeSidebar = () => {
+    if (!sidebar) return;
+    sidebar.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('active');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  };
+
+  if (menuBtn) {
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (sidebar && sidebar.classList.contains('open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeSidebar();
+    });
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', closeSidebar);
+  }
+
+  // Keyboard navigation: ESC to close
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
+      closeSidebar();
+    }
+  });
 
   navLinks.forEach((link) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const targetView = link.getAttribute('data-view');
       switchView(targetView, link.textContent.trim());
-
-      // Close mobile sidebar if open
-      if (sidebar && sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-      }
+      closeSidebar();
     });
   });
 
-  if (menuBtn && sidebar) {
-    menuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-    });
-  }
+  // Reset state on window desktop resize
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 1024 && sidebar && sidebar.classList.contains('open')) {
+      closeSidebar();
+    }
+  });
 }
 
 export function switchView(viewId, viewTitle) {
@@ -247,23 +290,34 @@ function setupForm() {
       Purpose_Of_Use: document.getElementById('input-Purpose_Of_Use').value,
     };
 
-    state.currentInputs = inputs;
-    await runAssessment(inputs);
+    const success = await runAssessment(inputs);
 
     if (btn) btn.disabled = false;
-    showToast('Assessment updated successfully!');
-    switchView('view-dashboard', 'Dashboard');
+    if (success) {
+      showToast('Assessment updated successfully!');
+      switchView('view-dashboard', 'Dashboard');
+    }
   });
 }
 
+let assessmentRequest = 0;
 async function runAssessment(inputs) {
+  const requestId = ++assessmentRequest;
+  document.getElementById('assessment-form')?.setAttribute('aria-busy', 'true');
   try {
     const data = await api.assess(inputs);
+    if (requestId !== assessmentRequest) return false;
+    state.currentInputs = { ...data.row };
     state.assessmentData = data;
     renderAssessmentResults(data);
-    syncSimulatorBase(inputs, data.score);
+    syncSimulatorBase(data.row, data.score);
+    for (const warning of data.warnings || []) showToast(warning);
+    return true;
   } catch (err) {
-    showToast(`Assessment failed: ${err.message}`, 'error');
+    if (requestId === assessmentRequest) showToast(`Assessment failed: ${err.message}`, 'error');
+    return false;
+  } finally {
+    if (requestId === assessmentRequest) document.getElementById('assessment-form')?.setAttribute('aria-busy', 'false');
   }
 }
 
@@ -396,6 +450,7 @@ function getUnit(feat) {
    What-If Simulator
    ========================================================================== */
 let simDebounceTimer = null;
+let simulationRequest = 0;
 
 function setupSimulator() {
   const simSliders = ['sim-sleep', 'sim-activity', 'sim-usage', 'sim-unlocks', 'sim-study'];
@@ -405,6 +460,7 @@ function setupSimulator() {
     if (!el) return;
 
     el.addEventListener('input', () => {
+      simulationRequest++;
       const badge = document.getElementById(`${id}-val`);
       const unit = el.getAttribute('data-unit') || '';
       if (badge) badge.textContent = `${el.value} ${unit}`;
@@ -418,8 +474,8 @@ function setupSimulator() {
   const resetBtn = document.getElementById('reset-simulation-btn');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      if (state.currentInputs) {
-        syncSimulatorBase(state.currentInputs, state.assessmentData?.score || 6.0);
+      if (state.assessmentData) {
+        syncSimulatorBase(state.currentInputs, state.assessmentData.score);
         showToast('Simulator reset to your original habits');
       }
     });
@@ -427,6 +483,8 @@ function setupSimulator() {
 }
 
 function syncSimulatorBase(inputs, currentScore) {
+  clearTimeout(simDebounceTimer);
+  simulationRequest++;
   const baseScoreEl = document.getElementById('sim-base-score');
   const simScoreEl = document.getElementById('sim-target-score');
   const diffPill = document.getElementById('sim-diff-pill');
@@ -457,7 +515,8 @@ function setSimVal(id, val) {
 }
 
 async function triggerSimulation() {
-  if (!state.currentInputs) return;
+  if (!state.assessmentData) return;
+  const requestId = ++simulationRequest;
 
   const changes = {
     Sleep_Hours_Per_Night: parseFloat(document.getElementById('sim-sleep').value),
@@ -469,6 +528,7 @@ async function triggerSimulation() {
 
   try {
     const simResult = await api.simulate(state.currentInputs, changes);
+    if (requestId !== simulationRequest) return;
 
     const simScoreEl = document.getElementById('sim-target-score');
     const diffPill = document.getElementById('sim-diff-pill');
@@ -489,7 +549,11 @@ async function triggerSimulation() {
       }
     }
   } catch (err) {
-    console.error('Simulation error:', err);
+    if (requestId === simulationRequest) {
+      document.getElementById('sim-target-score').textContent = '--';
+      document.getElementById('sim-diff-pill').textContent = 'Simulation unavailable';
+      showToast(`Simulation failed: ${err.message}`, 'error');
+    }
   }
 }
 
@@ -520,6 +584,10 @@ function renderPlanTable(ramp, selectedWeek) {
   if (!container || !ramp) return;
 
   const weekRows = ramp.filter((r) => r.Week === selectedWeek);
+  if (weekRows.length === 0) {
+    container.innerHTML = '<tr><td colspan="3">No additional targets suggested. Maintain your current routine and check in next week.</td></tr>';
+    return;
+  }
   container.innerHTML = weekRows
     .map(
       (r) => `
@@ -537,14 +605,16 @@ function renderSchedule(schedule) {
   const list = document.getElementById('schedule-checklist');
   if (!list || !schedule) return;
 
-  const savedChecks = JSON.parse(localStorage.getItem('schedule_checks') || '{}');
+  const planKey = JSON.stringify(schedule);
+  const saved = readStorage('schedule_checks', {});
+  const savedChecks = saved?.plan === planKey ? saved.checks || {} : {};
 
   list.innerHTML = schedule
-    .map((item, idx) => {
+    .map((item) => {
       const isChecked = savedChecks[item.Day] ? 'checked' : '';
       return `
       <div class="schedule-day-card">
-        <input type="checkbox" class="schedule-checkbox" data-day="${item.Day}" ${isChecked}>
+        <input type="checkbox" class="schedule-checkbox" data-day="${item.Day}" aria-label="Complete ${item.Day} plan" ${isChecked}>
         <span class="schedule-day-badge">${item.Day}</span>
         <span class="schedule-plan-text" style="${isChecked ? 'text-decoration: line-through; opacity: 0.6;' : ''}">
           ${item.Plan}
@@ -556,11 +626,10 @@ function renderSchedule(schedule) {
 
   // Add checkbox toggle listeners
   list.querySelectorAll('.schedule-checkbox').forEach((box) => {
-    box.addEventListener('change', (e) => {
+    box.addEventListener('change', () => {
       const day = box.getAttribute('data-day');
-      const current = JSON.parse(localStorage.getItem('schedule_checks') || '{}');
-      current[day] = box.checked;
-      localStorage.setItem('schedule_checks', JSON.stringify(current));
+      savedChecks[day] = box.checked;
+      writeStorage('schedule_checks', { plan: planKey, checks: savedChecks });
 
       const textEl = box.nextElementSibling.nextElementSibling;
       if (textEl) {
@@ -688,8 +757,10 @@ export function showToast(msg, type = 'info') {
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${
       type === 'error' ? '#ef4444' : '#10b981'
     }" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-    <span>${msg}</span>
+    <span></span>
   `;
+  toast.querySelector('span').textContent = msg;
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
 
   container.appendChild(toast);
   setTimeout(() => {
@@ -698,4 +769,18 @@ export function showToast(msg, type = 'info') {
     toast.style.transition = 'all 0.3s ease';
     setTimeout(() => toast.remove(), 300);
   }, 3200);
+}
+
+// Storage may be blocked or contain an old/corrupted value; the app still works.
+function readStorage(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    if (value === null) return fallback;
+    return key === 'theme' ? (value === 'dark' ? 'dark' : 'light') : JSON.parse(value);
+  } catch { return fallback; }
+}
+
+function writeStorage(key, value) {
+  try { localStorage.setItem(key, key === 'theme' ? value : JSON.stringify(value)); }
+  catch { /* Persistence is optional. */ }
 }

@@ -79,11 +79,20 @@ def score_to_band(score):
 
 def validate_inputs(raw):
     """Check the user's inputs. Returns (clean_row, warnings). Raises ValueError if unusable."""
+    if not isinstance(raw, dict):
+        raise ValueError("Request body must be a JSON object")
     row, warnings = {}, []
     for f in NUMERIC_FEATURES:
-        if f not in raw or raw[f] is None or pd.isna(raw[f]):
+        if f not in raw or raw[f] is None:
             raise ValueError(f"Missing value for {FRIENDLY[f]}")
-        value = float(raw[f])
+        if isinstance(raw[f], bool) or not isinstance(raw[f], (str, int, float)):
+            raise ValueError(f"{FRIENDLY[f]} must be a finite number")
+        try:
+            value = float(raw[f])
+        except (ValueError, TypeError):
+            raise ValueError(f"{FRIENDLY[f]} must be a finite number") from None
+        if not np.isfinite(value):
+            raise ValueError(f"{FRIENDLY[f]} must be a finite number")
         lo, hi = VALID_RANGES[f]
         if value < lo or value > hi:
             warnings.append(f"{FRIENDLY[f]} = {value:g} is outside the range the model "
@@ -269,7 +278,7 @@ def build_weekly_plan(changes, n_habits=3):
             value = c["current"] + (c["target"] - c["current"]) * share
             ramp_rows.append({"Week": week, "Habit": c["label"], "Target": _fmt(c["feature"], value),
                               "How": HOW[c["feature"]]})
-    ramp = pd.DataFrame(ramp_rows)
+    ramp = pd.DataFrame(ramp_rows, columns=["Week", "Habit", "Target", "How"])
 
     days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     schedule = []

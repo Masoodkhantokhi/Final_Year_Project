@@ -1,13 +1,19 @@
 /**
  * frontend/js/charts.js
- * Chart.js visualizations & Radial Gauge animations
+ * Responsive Chart.js visualizations & Radial Gauge animations.
+ * Built to adapt fluidly across devices and Windows display scaling (100%-200%).
  */
 
 let shapChartInstance = null;
 let radarChartInstance = null;
 
+// Track last rendered datasets for smooth resize re-rendering
+let lastShapDrivers = null;
+let lastUserHabits = null;
+
 /**
  * Animate the Circular/Radial SVG Gauge for Wellbeing Score
+ * Maintains 1:1 circular aspect ratio at all viewports.
  */
 export function updateScoreGauge(score, band) {
   const scoreEl = document.getElementById('gauge-score-value');
@@ -45,7 +51,7 @@ export function updateScoreGauge(score, band) {
 
   // Smooth number count-up animation
   let start = 0;
-  const duration = 1000;
+  const duration = 900;
   const startTime = performance.now();
 
   function animate(currentTime) {
@@ -68,15 +74,39 @@ export function updateScoreGauge(score, band) {
 
 /**
  * Render or update SHAP Horizontal Bar Chart
+ * Fully responsive: adapts font sizing and label length to viewport width.
  */
 export function renderShapChart(canvasId, drivers) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || !window.Chart) return;
 
+  lastShapDrivers = drivers;
+
+  // Viewport-aware responsive adjustments
+  const screenWidth = window.innerWidth;
+  const isMobile = screenWidth < 600;
+  const isNarrowMobile = screenWidth < 400;
+
   // Sort drivers by contribution ascending for intuitive horizontal display
   const sorted = [...drivers].sort((a, b) => a.contribution - b.contribution);
 
-  const labels = sorted.map((d) => d.label);
+  // Shorten labels on narrow screens to prevent clipping
+  const labels = sorted.map((d) => {
+    if (isNarrowMobile) {
+      const shortMap = {
+        'Daily social-media time': 'Social Media',
+        'Phone checks per day': 'Phone Checks',
+        'Study time': 'Study',
+        'Physical activity': 'Activity',
+        'Sleep': 'Sleep',
+        'Academic level': 'Degree',
+        'Main purpose of social media': 'Purpose',
+      };
+      return shortMap[d.label] || d.label;
+    }
+    return d.label;
+  });
+
   const data = sorted.map((d) => d.contribution);
   const bgColors = data.map((v) => (v >= 0 ? '#10b981' : '#ef4444'));
   const borderColors = data.map((v) => (v >= 0 ? '#059669' : '#dc2626'));
@@ -88,6 +118,9 @@ export function renderShapChart(canvasId, drivers) {
   if (shapChartInstance) {
     shapChartInstance.destroy();
   }
+
+  const yFontSize = isNarrowMobile ? 9 : isMobile ? 10 : 12;
+  const xFontSize = isMobile ? 10 : 11;
 
   shapChartInstance = new window.Chart(canvas, {
     type: 'bar',
@@ -101,7 +134,7 @@ export function renderShapChart(canvasId, drivers) {
           borderColor: borderColors,
           borderWidth: 1,
           borderRadius: 4,
-          barPercentage: 0.65,
+          barPercentage: isMobile ? 0.75 : 0.65,
         },
       ],
     },
@@ -109,6 +142,14 @@ export function renderShapChart(canvasId, drivers) {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          left: 4,
+          right: 12,
+          top: 6,
+          bottom: 6,
+        },
+      },
       plugins: {
         legend: {
           display: false,
@@ -120,10 +161,14 @@ export function renderShapChart(canvasId, drivers) {
           padding: 10,
           cornerRadius: 6,
           callbacks: {
+            title: function (items) {
+              const idx = items[0].dataIndex;
+              return sorted[idx].label;
+            },
             label: function (context) {
               const val = context.raw;
               const sign = val >= 0 ? '+' : '';
-              return `${sign}${val.toFixed(2)} points vs average student`;
+              return `${sign}${val.toFixed(2)} pts vs student average`;
             },
           },
         },
@@ -136,14 +181,14 @@ export function renderShapChart(canvasId, drivers) {
           },
           ticks: {
             color: textColor,
-            font: { family: 'Inter', size: 11 },
+            font: { family: 'Inter', size: xFontSize },
             callback: (v) => `${v > 0 ? '+' : ''}${v}`,
           },
           title: {
-            display: true,
-            text: 'Points Added (+) or Removed (-) vs Average Student',
+            display: !isMobile,
+            text: 'Points Added (+) or Removed (-) vs Baseline',
             color: textColor,
-            font: { family: 'Inter', size: 12, weight: '500' },
+            font: { family: 'Inter', size: 11, weight: '500' },
           },
         },
         y: {
@@ -152,7 +197,8 @@ export function renderShapChart(canvasId, drivers) {
           },
           ticks: {
             color: textColor,
-            font: { family: 'Inter', size: 12, weight: '500' },
+            font: { family: 'Inter', size: yFontSize, weight: '500' },
+            autoSkip: false,
           },
         },
       },
@@ -162,18 +208,23 @@ export function renderShapChart(canvasId, drivers) {
 
 /**
  * Render Lifestyle Habit Radar Chart
+ * Fully responsive with auto-scaled point labels and padding to prevent clipping.
  */
 export function renderHabitsRadar(canvasId, userHabits) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || !window.Chart) return;
 
+  lastUserHabits = userHabits;
+
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const textColor = isDark ? '#94a3b8' : '#475569';
   const gridColor = isDark ? '#1f293d' : '#e2e8f0';
 
+  const screenWidth = window.innerWidth;
+  const isMobile = screenWidth < 500;
+  const labelFontSize = isMobile ? 9 : 11;
+
   // Normalize habit metrics to a 0-100 score for healthy balance
-  // Sleep (ideal 8h = 100), Physical Act (ideal 2h = 100), Study (ideal 4h = 100)
-  // Low unlocks (60 = 100, 280 = 20), Low Social Media (1h = 100, 9h = 20)
   const sleepNorm = Math.min(Math.round((userHabits.Sleep_Hours_Per_Night / 8) * 100), 100);
   const actNorm = Math.min(Math.round((userHabits.Physical_Activity_Hours / 2.0) * 100), 100);
   const studyNorm = Math.min(Math.round((userHabits.Study_Hours / 4.0) * 100), 100);
@@ -214,23 +265,57 @@ export function renderHabitsRadar(canvasId, userHabits) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: isMobile ? 8 : 14,
+          bottom: isMobile ? 8 : 14,
+          left: isMobile ? 8 : 16,
+          right: isMobile ? 8 : 16,
+        },
+      },
       elements: {
         line: { borderWidth: 2 },
       },
       plugins: {
         legend: {
           display: true,
-          labels: { color: textColor, font: { family: 'Inter', size: 11 } },
+          position: 'top',
+          labels: {
+            color: textColor,
+            font: { family: 'Inter', size: isMobile ? 10 : 11 },
+            boxWidth: 12,
+            padding: isMobile ? 8 : 12,
+          },
         },
       },
       scales: {
         r: {
           angleLines: { color: gridColor },
           grid: { color: gridColor },
-          pointLabels: { color: textColor, font: { family: 'Inter', size: 11 } },
+          pointLabels: {
+            color: textColor,
+            font: { family: 'Inter', size: labelFontSize, weight: '500' },
+            padding: isMobile ? 4 : 8,
+          },
+          suggestedMin: 0,
+          suggestedMax: 100,
           ticks: { display: false, max: 100, min: 0 },
         },
       },
     },
   });
 }
+
+// Window resize observer to adapt charts dynamically
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (shapChartInstance && lastShapDrivers) {
+      renderShapChart('shap-chart-canvas', lastShapDrivers);
+    }
+    if (radarChartInstance && lastUserHabits) {
+      renderHabitsRadar('radar-chart-canvas', lastUserHabits);
+    }
+  }, 200);
+});

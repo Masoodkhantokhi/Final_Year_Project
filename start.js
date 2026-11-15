@@ -1,112 +1,80 @@
-/**
- * start.js
- * Cross-platform unified application orchestrator.
- * Spawns both the Python ML Microservice and the Node.js Express Backend,
- * waits for readiness, opens the browser, and handles graceful shutdown.
- */
-
-const { spawn, exec } = require('child_process');
+/** Start both services, check readiness, and stop only the processes we own. */
+const { spawn, execFile, spawnSync } = require('child_process');
 const path = require('path');
-const http = require('http');
-
+const net = require('net');
+const root = __dirname;
 const isWin = process.platform === 'win32';
-const pythonCmd = isWin
-  ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
-  : path.join(__dirname, 'venv', 'bin', 'python');
+const children = [];
+let stopping = false;
 
-console.log('========================================================');
-console.log(' Starting Student Wellbeing Assessment System...');
-console.log('========================================================');
+function stop(code = 0) {
+  if (stopping) return;
+  stopping = true;
+  for (const child of children) {
+    if (child.exitCode === null && child.pid) {
+      if (isWin) spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+      else child.kill('SIGTERM');
+    }
+  }
+  process.exitCode = code;
+}
+process.on('SIGINT', () => stop());
+process.on('SIGTERM', () => stop());
 
-// 1. Launch Python ML Microservice
-console.log('[1/3] Launching Python ML Microservice on port 5001...');
-const mlProcess = spawn(pythonCmd, [path.join(__dirname, 'ml-service', 'app.py')], {
-  stdio: 'inherit',
-  shell: true,
-});
-
-mlProcess.on('error', (err) => {
-  console.error('Failed to start Python ML Service:', err.message);
-  process.exit(1);
-});
-
-// Wait for ML Service to be ready
-function waitForMl(retries = 20) {
+function portFree(port) {
   return new Promise((resolve, reject) => {
-    const check = () => {
-      const req = http.get('http://127.0.0.1:5001/health', (res) => {
-        if (res.statusCode === 200) {
-          console.log('[2/3] ML Microservice is ready!');
-          resolve();
-        } else {
-          retry();
-        }
-      });
-
-      req.on('error', retry);
-      req.setTimeout(1000, () => {
-        req.destroy();
-        retry();
-      });
-    };
-
-    const retry = () => {
-      if (retries <= 0) {
-        reject(new Error('ML Microservice did not start in time.'));
-      } else {
-        retries--;
-        setTimeout(check, 500);
-      }
-    };
-
-    check();
+    const server = net.createServer();
+    server.once('error', () => reject(new Error(`Port ${port} is unavailable. Close the application using it or change backend/.env.`)));
+    server.listen(port, '127.0.0.1', () => server.close(resolve));
   });
 }
-
-waitForMl()
-  .then(() => {
-    // 2. Launch Node.js Backend Gateway
-    console.log('[3/3] Starting Express Backend on port 3000...');
-    const backendProcess = spawn('node', [path.join(__dirname, 'backend', 'server.js')], {
-      stdio: 'inherit',
-      shell: true,
-      env: { ...process.env, PORT: '3000', ML_SERVICE_URL: 'http://127.0.0.1:5001' },
-    });
-
-    backendProcess.on('error', (err) => {
-      console.error('Failed to start Express backend:', err.message);
-      mlProcess.kill();
-      process.exit(1);
-    });
-
-    // 3. Open browser after 1 second
-    setTimeout(() => {
-      const url = 'http://localhost:3000';
-      console.log(`\n>>> Application running at: ${url} <<<\n`);
-      const startCmd = isWin ? `start ${url}` : process.platform === 'darwin' ? `open ${url}` : `xdg-open ${url}`;
-      exec(startCmd);
-    }, 1200);
-
-    // Graceful shutdown
-    const cleanup = () => {
-      console.log('\nShutting down application services...');
-      try {
-        if (isWin) {
-          exec('taskkill /pid ' + mlProcess.pid + ' /T /F');
-          exec('taskkill /pid ' + backendProcess.pid + ' /T /F');
-        } else {
-          mlProcess.kill('SIGTERM');
-          backendProcess.kill('SIGTERM');
-        }
-      } catch (e) {}
-      process.exit(0);
-    };
-
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
-  })
-  .catch((err) => {
-    console.error('Startup failed:', err.message);
-    mlProcess.kill();
-    process.exit(1);
+function launch(command, args, env) {
+  const child = spawn(command, args, { cwd: root, stdio: 'inherit', windowsHide: true, env: { ...process.env, ...env } });
+  children.push(child);
+  child.once('error', error => { console.error(error.message); stop(1); });
+  child.once('exit', (code, signal) => {
+    if (!stopping) { console.error(`Service stopped unexpectedly (${signal || code}).`); stop(1); }
   });
+  return child;
+}
+async function waitFor(url, expected) {
+  const deadline = Date.now() + 60000;
+  while (!stopping && Date.now() < deadline) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(1000) });
+      if (response.ok && (await response.json()).status === expected) return;
+    } catch { /* Service is still starting. */ }
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+  throw new Error(`Service did not become healthy: ${url}`);
+}
+async function main() {
+  require('./setup').main();
+  require('./backend/node_modules/dotenv').config({ path: path.join(root, 'backend', '.env') });
+  const port = Number(process.env.PORT || 3000);
+  const mlUrl = new URL(process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001');
+  const mlPort = Number(process.env.ML_PORT || mlUrl.port || 5001);
+  if (![port, mlPort].every(value => Number.isInteger(value) && value > 0 && value < 65536) || port === mlPort) {
+    throw new Error('PORT and ML_PORT must be different valid ports.');
+  }
+  if (!['localhost', '127.0.0.1'].includes(mlUrl.hostname) || mlUrl.protocol !== 'http:') {
+    throw new Error('The combined launcher requires a local HTTP ML_SERVICE_URL.');
+  }
+  await Promise.all([portFree(port), portFree(mlPort)]);
+  const mlAddress = `http://127.0.0.1:${mlPort}`;
+  launch(path.join(root, '.venv', isWin ? 'Scripts/python.exe' : 'bin/python'), [path.join(root, 'ml-service', 'app.py')], { ML_PORT: String(mlPort), PYTHONUNBUFFERED: '1' });
+  await waitFor(`${mlAddress}/health`, 'ok');
+  launch(process.execPath, [path.join(root, 'backend', 'server.js')], { PORT: String(port), ML_SERVICE_URL: mlAddress });
+  await waitFor(`http://127.0.0.1:${port}/api/health`, 'healthy');
+  if (stopping) return;
+  const url = `http://localhost:${port}`;
+  console.log(`\nApplication ready: ${url}\nPress Ctrl+C to stop.\n`);
+  if (process.env.NO_BROWSER !== '1') {
+    const command = isWin ? 'rundll32' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+    const args = isWin ? ['url.dll,FileProtocolHandler', url] : [url];
+    execFile(command, args, { windowsHide: true }, error => {
+      if (error) console.log(`Open ${url} in your browser.`);
+    });
+  }
+}
+main().catch(error => { console.error(`[Startup failed] ${error.message}`); stop(1); });

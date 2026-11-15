@@ -9,7 +9,6 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
-import numpy as np
 
 # Add project root to sys.path so we can import mh_engine
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -180,20 +179,18 @@ def simulate():
     if artifact is None:
         return jsonify({"error": "Model not loaded"}), 503
 
-    payload = request.get_json(silent=True) or {}
-    base_inputs = payload.get("base", {})
-    changes = payload.get("changes", {})
-
+    payload = request.get_json(silent=True)
     try:
+        if not isinstance(payload, dict):
+            raise ValueError("Request body must be a JSON object")
+        base_inputs = payload.get("base")
+        changes = payload.get("changes")
+        if not isinstance(changes, dict):
+            raise ValueError('Simulation requires a "changes" object')
+        if any(k not in eng.FEATURES for k in changes):
+            raise ValueError("Unknown feature in simulation changes")
         row, warnings = eng.validate_inputs(base_inputs)
-        # Apply changes
-        simulated_row = {**row}
-        for k, v in changes.items():
-            if k in eng.NUMERIC_FEATURES:
-                lo, hi = eng.VALID_RANGES[k]
-                simulated_row[k] = min(max(float(v), lo), hi)
-            elif k in eng.CATEGORICAL_FEATURES and v in eng.CHOICES[k]:
-                simulated_row[k] = v
+        simulated_row, change_warnings = eng.validate_inputs({**row, **changes})
 
         current_score = eng.predict_score(artifact, row)
         simulated_score = eng.predict_score(artifact, simulated_row)
@@ -205,7 +202,8 @@ def simulate():
             "score_diff": round(score_diff, 2),
             "current_band": eng.score_to_band(current_score),
             "simulated_band": eng.score_to_band(simulated_score),
-            "simulated_row": simulated_row
+            "simulated_row": simulated_row,
+            "warnings": warnings + change_warnings
         })
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

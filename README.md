@@ -1,174 +1,129 @@
-# Student Wellbeing Assessment & Recommendation System (WellbeingAI)
-> **Final Year Project** | Full-Stack Machine Learning Web Application
+# Student Wellbeing Assessment System
 
-An end-to-end Explainable AI (XAI) application designed to assess, interpret, and optimize student mental wellbeing based on lifestyle, academic routines, and digital phone usage habits.
+Final-year educational project: a responsive dashboard backed by an Express API and a Flask machine-learning service. It uses the saved Random Forest model to generate a score, SHAP explanations, what-if comparisons, recommendations, a four-week plan, and matched learning resources.
 
----
+This is an educational model, not a diagnostic or treatment tool. Predictions describe patterns in the training data; changing a habit does not guarantee the predicted effect. Assessment answers are not stored on the server. Theme preferences and checklist progress are stored in the browser.
 
-## 1. Overview & Key Capabilities
+## Setup and launch
 
-- **Predictive Scoring Pipeline**: Deploys a tuned Random Forest regression model ($R^2 = 0.85$, $MAE = 0.40$) to compute an accurate wellbeing score ($0.0 - 10.0$) and categorizes it into defined bands (*Needs attention*, *Moderate*, *Good*).
-- **Explainable AI (SHAP)**: Employs TreeExplainer to break down predictions into precise positive and negative habit attributions, transparently displaying what helped or hindered the student's wellbeing score.
-- **Interactive "What-If" Habit Studio**: Real-time simulation playground powered by the live ML model, allowing students to tweak variables (sleep, screen time, physical exercise) and immediately visualize score impact.
-- **4-Week Structured Improvement Ramp**: Automatically designs incremental 25% weekly targets and provides an interactive week-1 checklist with local browser persistence (`localStorage`).
-- **Curated Educational Resources**: Matches specific habit deficiencies with vetted lectures (TED talks by neuroscientists and sleep scientists) and free university courses (Yale, UC Berkeley).
-- **Ethical AI**: Purposely excludes demographic indicators (age, gender, nationality) from training to prevent algorithmic bias; operates with zero server-side user data storage.
+Install **64-bit Python 3.11 or 3.12** and **Node.js 18 or newer**. Python 3.12 is the locally verified version. Add Python to PATH during Windows installation.
 
----
-
-## 2. Modern Technology Stack
-
-| Layer | Technologies & Tools |
-|---|---|
-| **Frontend** | HTML5, CSS3 (Modern SaaS design system, CSS variables, dark/light theme), JavaScript (ES6+ Modules), Chart.js 4.4, Custom SVG Gauge & Icons |
-| **Backend Gateway** | Node.js (v18+), Express.js, REST API, Morgan logging, CORS, input sanitization middleware |
-| **ML Microservice** | Python 3.12, Flask 3.1, scikit-learn 1.9.1, SHAP 0.54, pandas 3.1, joblib |
-| **Orchestrator** | Node.js automated process manager (`start.js`) & one-click launcher scripts |
-
----
-
-## 3. Project Directory Structure
-
-```text
-Final_Year_Project/
-├── backend/                             # Node.js Express Gateway
-│   ├── controllers/
-│   │   └── assessmentController.js      # REST API route handlers
-│   ├── middleware/
-│   │   └── validation.js                # Input sanitization and bounds checking
-│   ├── routes/
-│   │   └── api.js                       # Route declarations (/api/*)
-│   ├── services/
-│   │   └── mlService.js                 # Resilient HTTP proxy to Python ML service
-│   ├── .env.example                     # Environment configuration template
-│   ├── package.json                     # Node dependencies & scripts
-│   └── server.js                        # Express server & static asset host (Port 3000)
-│
-├── frontend/                            # Modern SaaS Dashboard SPA
-│   ├── css/
-│   │   └── style.css                    # Design tokens, themes, layouts, animations
-│   ├── js/
-│   │   ├── api.js                       # ES6 API client
-│   │   ├── charts.js                    # Chart.js SHAP bar & habit radar charts
-│   │   └── app.js                       # SPA router, state, presets, what-if, plan
-│   └── index.html                       # Semantic HTML5 single-page application
-│
-├── ml-service/                          # Dedicated Python ML Microservice
-│   └── app.py                           # Flask REST API serving model & SHAP (Port 5001)
-│
-├── Mental_Health_Model.pkl              # Core trained Random Forest model & metrics
-├── mh_engine.py                         # Validation, SHAP TreeExplainer, rule-based advice
-├── resources.csv                        # Curated educational videos and courses
-├── Student_Social_Media_...csv          # Original training dataset
-├── Mental_Health_Assessment_System.ipynb # Research notebook for thesis & viva defense
-├── requirements.txt                     # Python pip package specifications
-├── start.js                             # Cross-platform orchestrator (starts ML + Node)
-├── START_DASHBOARD_WINDOWS.bat          # One-click launcher for Windows
-├── START_DASHBOARD_MAC_LINUX.sh         # One-click launcher for Mac / Linux
-└── README.md                            # Comprehensive documentation
+```sh
+node setup.js
+node start.js
 ```
 
----
+On Windows, double-click `SETUP_WINDOWS.bat` for setup, then `START_DASHBOARD_WINDOWS.bat` to launch. On macOS/Linux, run `bash START_DASHBOARD_MAC_LINUX.sh`.
 
-## 4. Quickstart Guide (Local Development)
+The launcher verifies dependencies and the model, starts both services, waits for healthy responses, and opens **http://localhost:3000**. Press **Ctrl+C** to stop. It reports occupied ports without terminating unrelated applications.
 
-### Prerequisites
-1. **Python 3.12**: Download from [python.org](https://www.python.org/) (ensure *"Add python.exe to PATH"* is checked).
-2. **Node.js (v18 or higher)**: Download from [nodejs.org](https://nodejs.org/).
+An internet connection is needed for first-time package installation. The frontend currently loads Chart.js and optional fonts from CDNs, so charts also require access to those hosts.
 
-### One-Click Launch
-- **Windows**: Double-click `START_DASHBOARD_WINDOWS.bat`
-- **Mac / Linux**: Run `bash START_DASHBOARD_MAC_LINUX.sh`
+### Copying to another laptop
 
-The launcher will verify dependencies, start both the Python ML service and Express backend, and automatically open your browser at `http://localhost:3000`.
+Copy or clone the source files, model, and CSVs. **Do not copy `.venv`, `venv`, or `node_modules`**: run setup on the destination computer. All application file paths are relative to the project, including paths containing spaces.
 
-### Running in VS Code / Terminal
-1. **Set up Python Virtual Environment**:
-   ```bash
-   python -m venv venv
-   # On Windows:
-   venv\Scripts\activate
-   # On Mac/Linux:
-   source venv/bin/activate
+Both of these use the same dependency list:
 
-   pip install -r requirements.txt
-   ```
+```sh
+python -m pip install -r requirements.txt
+python -m pip install -r ml-service/requirements.txt
+```
 
-2. **Set up Node.js Backend**:
-   ```bash
-   cd backend
-   npm install
-   cd ..
-   ```
+Prefer the project environment (`.venv/Scripts/python.exe` on Windows, `.venv/bin/python` on macOS/Linux) when running pip. Setup creates that environment automatically and checks installed dependencies before reuse. If a copied environment cannot run, remove only the project's `.venv` folder and rerun setup.
 
-3. **Run Unified Launcher**:
-   ```bash
-   node start.js
-   ```
+The saved model records **scikit-learn 1.9.1**; the runtime pins that exact version. Do not substitute another version or retrain the model just to suppress a loading error. Other dependencies have compatibility ranges. A new installation still depends on package availability for the destination OS and Python version.
 
----
+## Configuration
 
-## 5. REST API Documentation
+Setup creates `backend/.env` from `backend/.env.example`. Process environment variables take precedence.
 
-The Express gateway exposes endpoints under `/api`:
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `3000` | Dashboard and API port |
+| `ML_SERVICE_URL` | `http://127.0.0.1:5001` | Python service address |
+| `ML_PORT` | URL port, or `5001` | Optional local Python port override |
+| `NO_BROWSER` | unset | Set to `1` to skip opening the browser |
 
-### `GET /api/health`
-Health verification across both Express and Python ML services.
+The combined launcher manages a local Python service. When running services separately, start `ml-service/app.py` with the project Python interpreter and `backend/server.js` with Node. The gateway reads `backend/.env` regardless of the working directory.
+
+## Application features
+
+- Assessment form and three sample profiles.
+- Score, model range, SHAP drivers and habit radar.
+- Recommendations and a simulator tied to the last successful assessment.
+- Four-week targets, a downloadable text plan, and a checklist scoped to the current plan.
+- Resource cards, dark/light themes and a mobile navigation drawer.
+- Input validation, range-adjustment warnings, bounded service requests and visible failure messages.
+
+## Project files
+
+| Path | Purpose |
+| --- | --- |
+| `frontend/` | Dashboard HTML, CSS and JavaScript |
+| `backend/` | Express gateway, validation and ML client |
+| `ml-service/app.py` | Flask inference API |
+| `ml-service/requirements.txt` | Canonical runtime dependencies |
+| `requirements.txt` | Convenience include for root-level pip installs |
+| `mh_engine.py` | Prediction, SHAP, advice, planning and resource matching |
+| `Mental_Health_Model.pkl` | Required trained model artifact |
+| `resources.csv` | Required curated resource catalog |
+| `Mental_Health_Assessment_System.ipynb` | Training/research notebook for the report and viva |
+| `Student_Social_Media_And_Mental_Health_Impact.csv` | Research dataset; retained for reproducibility |
+| `setup.js`, `start.js` | Portable setup and service lifecycle |
+| `tests/` | API and browser regression tests |
+
+The training notebook may need additional research packages beyond the application runtime requirements.
+
+## API
+
+The frontend talks to `/api` on the gateway. Successful data endpoints return `{ "success": true, "data": ... }`. Invalid inputs return HTTP 400; unavailable ML requests return 503 or 504.
+
+| Method | Endpoint | Result |
+| --- | --- | --- |
+| GET | `/api/health` | Gateway and ML health (200 or 503) |
+| GET | `/api/meta` | Features, ranges, choices and model metadata |
+| POST | `/api/assess` | Complete assessment, plan and resources |
+| POST | `/api/predict` | Score and band |
+| POST | `/api/explain` | SHAP contributions |
+| POST | `/api/simulate` | Baseline and modified prediction |
+| GET | `/api/resources` | Resource catalog in `data.resources` |
+
+Assessment input example:
+
 ```json
 {
-  "status": "healthy",
-  "gateway": { "status": "ok", "uptime": 12.4 },
-  "ml_service": {
-    "status": "ok",
-    "model_name": "Random Forest (tuned)",
-    "metrics": { "test_r2": 0.85, "test_mae": 0.40 }
-  }
+  "Avg_Daily_Usage_Hours": 5,
+  "Daily_Unlocks": 170,
+  "Study_Hours": 3,
+  "Physical_Activity_Hours": 1.7,
+  "Sleep_Hours_Per_Night": 6.6,
+  "Academic_Level": "Undergraduate",
+  "Purpose_Of_Use": "Entertainment"
 }
 ```
 
-### `POST /api/assess`
-Computes complete wellbeing assessment, SHAP drivers, personalized advice, 4-week ramp, and matched resources.
-- **Request Body**:
-  ```json
-  {
-    "Avg_Daily_Usage_Hours": 5.0,
-    "Daily_Unlocks": 170,
-    "Study_Hours": 3.0,
-    "Physical_Activity_Hours": 1.7,
-    "Sleep_Hours_Per_Night": 6.6,
-    "Academic_Level": "Undergraduate",
-    "Purpose_Of_Use": "Entertainment"
-  }
-  ```
-- **Response**: Full JSON containing `score`, `band`, `range`, `drivers` (SHAP attributions), `advice`, `ramp`, `schedule`, `videos`, and `courses`.
+Simulation accepts `{ "base": <complete assessment input>, "changes": { "Sleep_Hours_Per_Night": 8 } }`. Invalid types and categories are rejected; finite numeric values outside training ranges are clamped with returned warnings.
 
-### `POST /api/simulate`
-Live what-if habit modification evaluation.
-- **Request Body**:
-  ```json
-  {
-    "base": { ... },
-    "changes": {
-      "Sleep_Hours_Per_Night": 8.0,
-      "Physical_Activity_Hours": 2.2
-    }
-  }
-  ```
-- **Response**: `{ current_score, simulated_score, score_diff, simulated_band }`
+## Verification
 
----
+After setup:
 
-## 6. Model Verification & Parity
+```sh
+node tests/test_stack.js
+node tests/test_all_views.js
+```
 
-The modernized architecture preserves 100% fidelity with the original machine learning pipeline:
-- Estimator: Scikit-learn `Pipeline` (ColumnTransformer + RandomForestRegressor).
-- SHAP: Local explanations aggregated to parent feature names using `TreeExplainer`.
-- Preprocessing & ranges: Identical bounds enforced across client, gateway, and ML service.
+The API tests check prediction parity, SHAP reconstruction, plans, resources, malformed payloads and validation through both services. They use temporary free ports and stop their own services.
 
----
+Browser tests need **Node.js 22+** and Chrome, Edge or Chromium. Set `BROWSER_BIN` if the browser is installed elsewhere. They check eight views at ten viewport sizes from 320 to 2560 pixels, the mobile drawer, theme switching, corrupted storage, preset/reset behavior, assessment failure and stale simulation responses. Set `SCREENSHOT_DIR` to save optional screenshots. Browser profiles are isolated in the OS temporary directory.
 
-## 7. Educational & Crisis Support Disclaimers
-This tool was engineered strictly as an educational and academic final-year project. It does **not** provide psychological or psychiatric diagnosis, clinical treatment, or medical advice. 
+## Troubleshooting
 
-- **Pakistan Mental Health Hotline**: Umang 24/7 Helpline at `0311-7786264` ([umang.com.pk](https://umang.com.pk)).
-- **Emergency**: For immediate danger or self-harm crisis, contact local emergency services immediately.
+- **Python not found or unsupported:** install 64-bit Python 3.11/3.12 and rerun setup.
+- **Package download failure:** check internet access and registry availability, then rerun setup. A failed model check is a setup failure, not a successful installation.
+- **Port occupied:** close the application using that port or choose different ports in `backend/.env`.
+- **Charts missing:** check access to `cdn.jsdelivr.net`; other assessment results remain available.
+- **Model unavailable:** inspect the Python terminal error and rerun `node setup.js`. Keep the model and resource CSV in the project root.
+
+The Flask development server is appropriate for a local demonstration. A public deployment needs a production server and a separate deployment review.
